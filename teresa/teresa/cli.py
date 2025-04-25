@@ -115,26 +115,38 @@ def count_interactive_shells():
 
 
 def stop_all_containers():
+    typer.echo("Stopping any container instances...")
     install_dir = get_os_install_dir()
     if count_interactive_shells():
         subprocess.call(["docker", "compose", "down"], cwd=install_dir)
-    else:
-        typer.echo("No running containers")
 
 
 def purge():
+    install_dir = get_os_install_dir()
+
     # Check if the container is still running and stop it
     stop_all_containers()
+    # Delete the container
+    typer.echo("Deleting the container and cache...")
+    subprocess.run(
+        ["docker", "compose", "down", "--volumes", "--rmi", "all"], cwd=install_dir
+    )
+    # Prune all dangling containers
+    typer.echo("Removing dangling images...")
+    res = subprocess.run(
+        ["docker", "image", "prune", "-f"],
+        capture_output=True,
+        text=True,
+    )
+    typer.echo(res.stdout)
+
     # Then remove install files (needs to work across any OS)
-    install_dir = get_os_install_dir()
     if os.path.exists(install_dir):
         try:
             shutil.rmtree(install_dir)
             typer.echo(f"Deleted all install files in {install_dir}")
         except Exception as e:
             typer.echo(f"Failed to delete install files: {e}")
-    else:
-        typer.echo(f"No install files found in {install_dir}")
 
 
 @app.command()
@@ -149,7 +161,10 @@ def start():
     # If container is not running
     num_shells = count_interactive_shells()
     if num_shells == 0:
-        subprocess.run(["docker", "compose", "up", "-d"], cwd=install_dir)
+        subprocess.run(
+            ["docker", "compose", "up", "-d", "--build"],
+            cwd=install_dir,
+        )
     subprocess.run(["docker", "exec", "-it", CONTAINER_NAME, "bash"])
 
     # Once we exit, we count the number of open shells and if it's 0 then we stop the container
@@ -169,14 +184,14 @@ def restart():
     """Rebuild the dev container from scratch."""
     # stop all containers, delete them, and then pull latest Dockerfiles, rebuild
     purge()
+    install_dir = get_os_install_dir()
+    install_and_sync_repo(install_dir)
 
 
 @app.command()
 def cleanup():
     """Delete all install files"""
     purge()
-    install_dir = get_os_install_dir()
-    install_and_sync_repo(install_dir)
 
 
 if __name__ == "__main__":
