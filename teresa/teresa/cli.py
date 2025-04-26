@@ -196,8 +196,9 @@ def cleanup():
 @app.command()
 def debug():
     """Print statements for debugging purposes"""
-    typer.echo(get_os_install_dir())
-    typer.echo(docker_daemon_is_running())
+    typer.echo(f"Install Directory: {get_os_install_dir()}")
+    typer.echo(f"Docker Daemon: {docker_daemon_is_running()}")
+    typer.echo(f"Number of shells: {count_interactive_shells()}")
 
 if __name__ == "__main__":
     app()
