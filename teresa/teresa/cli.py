@@ -193,6 +193,11 @@ def cleanup():
     """Delete all install files"""
     purge()
 
+@app.command()
+def debug():
+    """Print statements for debugging purposes"""
+    typer.echo(get_os_install_dir())
+    typer.echo(docker_daemon_is_running())
 
 if __name__ == "__main__":
     app()
