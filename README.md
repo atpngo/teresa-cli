@@ -23,3 +23,6 @@ Additionally, we are assuming that we're using just the plain ol' Docker Engine,
 docker context use default
 ```
 
+## Future Features
+1. Launch host based GUI 
+2. Maybe create a CLI tool to abstract ROS commands within the container?
